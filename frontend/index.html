@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvoiceSnap — Extract Invoice Data Instantly</title>
+<meta name="description" content="Upload any PDF invoice and get structured data extracted automatically. 3 free extractions, then $9/mo.">
+<meta property="og:title" content="InvoiceSnap — AI Invoice Data Extraction">
+<meta property="og:description" content="Drag, drop, extract. Turn messy PDF invoices into clean structured data in seconds.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* =============================================
+   InvoiceSnap — Design System
+   Dark mode by default, brand: #2563eb, Stripe-level minimalism
+   ============================================= */
+:root {
+  --brand: #2563eb;
+  --brand-hover: #1d4ed8;
+  --brand-light: #3b82f6;
+  --brand-glow: rgba(37, 99, 235, 0.15);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --bg-primary: #0a0a0b;
+  --bg-secondary: #111113;
+  --bg-card: #18181b;
+  --bg-card-hover: #1f1f23;
+  --bg-input: #18181b;
+  --border: #27272a;
+  --border-light: #3f3f46;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+/* Nav */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,10,11,0.85); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+}
+nav .container {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 20px; color: var(--text-primary);
+  text-decoration: none;
+}
+.nav-logo {
+  width: 32px; height: 32px; background: var(--brand);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.nav-cta {
+  background: var(--brand); color: #fff; border: none;
+  padding: 8px 18px; border-radius: var(--radius-xs);
+  font-weight: 600; font-size: 14px; cursor: pointer;
+  transition: background 0.15s;
+}
+.nav-cta:hover { background: var(--brand-hover); }
+
+/* Hero */
+.hero {
+  padding: 80px 0 60px;
+  text-align: center;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 50px; padding: 6px 16px;
+  font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+.hero-badge .dot {
+  width: 8px; height: 8px; background: var(--success);
+  border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.hero h1 {
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1.15; margin-bottom: 20px;
+}
+.hero h1 span { color: var(--brand); }
+.hero p {
+  font-size: 18px; color: var(--text-secondary);
+  max-width: 540px; margin: 0 auto 32px;
+}
+
+/* Upload Zone */
+.upload-section { padding: 0 0 60px; }
+.upload-zone {
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius); padding: 48px 24px;
+  text-align: center; cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-card);
+  position: relative; overflow: hidden;
+}
+.upload-zone::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), var(--brand-glow), transparent 70%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.upload-zone:hover::before { opacity: 1; }
+.upload-zone.drag-over {
+  border-color: var(--brand); border-style: solid;
+  background: var(--bg-card-hover);
+}
+.upload-zone.drag-over::before { opacity: 1; }
+
+.upload-icon {
+  width: 56px; height: 56px; margin: 0 auto 16px;
+  background: var(--brand-glow); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.upload-zone h3 {
+  font-size: 18px; font-weight: 600; margin-bottom: 6px;
+  position: relative;
+}
+.upload-zone p {
+  font-size: 14px; color: var(--text-muted);
+  position: relative;
+}
+.upload-zone input { display: none; }
+
+/* File info */
+.file-info {
+  display: none; align-items: center; gap: 12px;
+  margin-top: 16px; padding: 12px 16px;
+  background: var(--bg-secondary); border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.file-info.visible { display: flex; }
+.file-info .file-icon { font-size: 24px; }
+.file-info .file-name { font-weight: 500; font-size: 14px; flex: 1; }
+.file-info .file-size { font-size: 13px; color: var(--text-muted); }
+.file-info .remove-file {
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 18px; padding: 4px;
+}
+.file-info .remove-file:hover { color: var(--error); }
+
+/* Extract button */
+.extract-btn {
+  display: none; margin: 20px auto 0;
+  background: var(--brand); color: #fff; border: none;
+  padding: 14px 32px; border-radius: var(--radius-xs);
+  font-weight: 600; font-size: 15px; cursor: pointer;
+  transition: all 0.15s;
+  width: 100%; max-width: 300px;
+}
+.extract-btn:not(:disabled):hover { background: var(--brand-hover); transform: translateY(-1px); box-shadow: 0 4px 20px var(--brand-glow); }
+.extract-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.extract-btn.visible { display: block; }
+.extract-btn .spinner {
+  display: none; width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+  margin-right: 8px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.extract-btn.loading .spinner { display: inline-block; }
+.extract-btn.loading .btn-text { display: none; }
+
+/* Free counter */
+.free-counter {
+  text-align: center; margin-top: 12px;
+  font-size: 13px; color: var(--text-muted);
+}
+.free-counter strong { color: var(--brand); }
+
+/* Results Section */
+.results-section { padding: 0 0 80px; display: none; }
+.results-section.visible { display: block; }
+
+.results-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.results-header {
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.results-header h2 { font-size: 18px; font-weight: 600; }
+.results-actions { display: flex; gap: 8px; }
+.btn {
+  padding: 8px 16px; border-radius: var(--radius-xs);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  color: var(--text-primary); transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+  text-decoration: none;
+}
+.btn:hover { background: var(--bg-card-hover); border-color: var(--border-light); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+
+/* Summary Grid */
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px; background: var(--border);
+}
+.summary-item {
+  background: var(--bg-card); padding: 16px 20px;
+}
+.summary-item .label {
+  font-size: 12px; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 4px;
+}
+.summary-item .value {
+  font-size: 16px; font-weight: 600; color: var(--text-primary);
+}
+.summary-item .value.amount {
+  font-size: 22px; color: var(--success);
+}
+
+/* Line Items Table */
+.line-items-wrap {
+  padding: 20px 24px;
+}
+.line-items-wrap h3 {
+  font-size: 14px; font-weight: 600; margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 14px;
+}
+thead { background: var(--bg-secondary); }
+th {
+  text-align: left; padding: 10px 14px;
+  font-weight: 500; color: var(--text-muted); font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg-card-hover); }
+td.number { text-align: right; font-variant-numeric: tabular-nums; }
+tfoot td { font-weight: 600; border-top: 2px solid var(--border-light); }
+.no-items {
+  text-align: center; padding: 24px; color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Error state */
+.error-card {
+  background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius); padding: 24px; text-align: center;
+}
+.error-card .error-icon { font-size: 36px; margin-bottom: 8px; }
+.error-card h3 { font-size: 16px; margin-bottom: 4px; color: var(--error); }
+.error-card p { font-size: 14px; color: var(--text-secondary); }
+
+/* Upgrade prompt */
+.upgrade-banner {
+  display: none; text-align: center; padding: 40px 24px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.upgrade-banner.visible { display: block; }
+.upgrade-banner h3 { font-size: 20px; margin-bottom: 8px; }
+.upgrade-banner p { color: var(--text-secondary); margin-bottom: 20px; }
+.upgrade-banner .price {
+  font-size: 36px; font-weight: 700; color: var(--brand);
+  margin-bottom: 4px;
+}
+.upgrade-banner .price small { font-size: 16px; color: var(--text-muted); font-weight: 400; }
+
+/* Features section */
+.features {
+  padding: 60px 0 80px;
+  border-top: 1px solid var(--border);
+}
+.features h2 {
+  text-align: center; font-size: 28px; margin-bottom: 40px;
+  letter-spacing: -0.01em;
+}
+.feature-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.feature-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  transition: border-color 0.2s;
+}
+.feature-card:hover { border-color: var(--border-light); }
+.feature-card .feat-icon { font-size: 28px; margin-bottom: 12px; }
+.feature-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.feature-card p { font-size: 14px; color: var(--text-muted); }
+
+/* Pricing section */
+.pricing {
+  padding: 60px 0 80px;
+  border-top: 1px solid var(--border);
+}
+.pricing h2 {
+  text-align: center; font-size: 28px; margin-bottom: 40px;
+  letter-spacing: -0.01em;
+}
+.pricing-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.pricing-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 32px 28px;
+  width: 280px; position: relative;
+  transition: border-color 0.2s;
+}
+.pricing-card.pro { border-color: var(--brand); }
+.pricing-card .plan-name { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+.pricing-card .plan-price { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+.pricing-card .plan-price span { font-size: 16px; color: var(--text-muted); font-weight: 400; }
+.pricing-card .plan-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+.pricing-card ul { list-style: none; margin-bottom: 24px; }
+.pricing-card ul li {
+  font-size: 14px; padding: 4px 0; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 8px;
+}
+.pricing-card ul li::before { content: '✓'; color: var(--success); font-weight: 700; }
+.pricing-card .btn { width: 100%; justify-content: center; }
+
+/* Demo video placeholder */
+.demo-section {
+  padding: 40px 0 60px;
+  text-align: center;
+}
+.demo-placeholder {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 80px 24px;
+  color: var(--text-muted);
+}
+.demo-placeholder .play-btn {
+  width: 64px; height: 64px; margin: 0 auto 16px;
+  background: var(--brand); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; cursor: pointer;
+  transition: transform 0.2s;
+}
+.demo-placeholder .play-btn:hover { transform: scale(1.08); }
+
+/* Footer */
+footer {
+  text-align: center; padding: 40px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted); font-size: 13px;
+}
+footer a { color: var(--brand); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* Loading shimmer */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 400px 100%; animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); padding: 12px 20px;
+  font-size: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 200; opacity: 0; transform: translateY(10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.toast.error { border-color: var(--error); }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hero { padding: 48px 0 40px; }
+  .hero h1 { font-size: 32px; }
+  .upload-zone { padding: 32px 16px; }
+  .results-header { flex-direction: column; align-items: flex-start; }
+  .results-actions { width: 100%; }
+  .results-actions .btn { flex: 1; justify-content: center; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .pricing-cards { flex-direction: column; align-items: center; }
+  .pricing-card { width: 100%; max-width: 320px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="container">
+    <a href="#" class="nav-brand">
+      <div class="nav-logo">📄</div>
+      InvoiceSnap
+    </a>
+    <button class="nav-cta" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+      Get Started
+    </button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span class="dot"></span> Now in Public Beta
+    </div>
+    <h1>Turn PDF invoices into<br><span>structured data</span> instantly</h1>
+    <p>Drag, drop, extract. No manual entry. No signup. Just clean, exportable invoice data in seconds.</p>
+  </div>
+</section>
+
+<!-- Upload Section -->
+<section class="upload-section" id="upload">
+  <div class="container">
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📤</div>
+      <h3>Drop your invoice PDF here</h3>
+      <p>or click to browse — max 10 MB</p>
+      <input type="file" id="fileInput" accept=".pdf">
+    </div>
+    <div class="file-info" id="fileInfo">
+      <span class="file-icon">📄</span>
+      <span class="file-name" id="fileName"></span>
+      <span class="file-size" id="fileSize"></span>
+      <button class="remove-file" onclick="removeFile()" title="Remove">✕</button>
+    </div>
+    <button class="extract-btn" id="extractBtn" onclick="extractInvoice()">
+      <span class="spinner"></span>
+      <span class="btn-text">Extract Invoice Data</span>
+    </button>
+    <p class="free-counter" id="freeCounter">Loading...</p>
+
+    <!-- Upgrade banner (shown when limit reached) -->
+    <div class="upgrade-banner" id="upgradeBanner">
+      <h3>✨ Free limit reached</h3>
+      <p>You've used all 3 free extractions. Upgrade to Pro for unlimited extractions.</p>
+      <div class="price">$9<span>/month</span></div>
+      <p style="margin-top:4px">Unlimited invoice extractions</p>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="upgradeToPro()">
+        Upgrade to Pro →
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Results Section -->
+<section class="results-section" id="resultsSection">
+  <div class="container">
+    <div class="results-card">
+      <div class="results-header">
+        <h2>📋 Extracted Invoice Data</h2>
+        <div class="results-actions">
+          <button class="btn" onclick="exportData('csv')">⬇ CSV</button>
+          <button class="btn" onclick="exportData('xlsx')">⬇ Excel</button>
+          <button class="btn" onclick="resetForm()">🔄 New Invoice</button>
+        </div>
+      </div>
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="line-items-wrap" id="lineItemsWrap"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Error Section -->
+<section class="results-section" id="errorSection">
+  <div class="container">
+    <div class="error-card">
+      <div class="error-icon">⚠️</div>
+      <h3 id="errorTitle">Extraction Failed</h3>
+      <p id="errorMsg">Something went wrong.</p>
+      <button class="btn" style="margin-top:12px" onclick="resetForm()">Try Again</button>
+    </div>
+  </div>
+</section>
+
+<!-- Demo -->
+<section class="demo-section" id="demo">
+  <div class="container">
+    <div class="demo-placeholder">
+      <div class="play-btn">▶</div>
+      <h3 style="font-size:18px;color:var(--text-primary);margin-bottom:6px">See InvoiceSnap in action</h3>
+      <p style="font-size:14px">Demo video coming soon</p>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="container">
+    <h2>Why InvoiceSnap?</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feat-icon">⚡</div>
+        <h3>Instant Extraction</h3>
+        <p>AI-powered parsing extracts vendor, dates, amounts, and line items in under 5 seconds.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">🔒</div>
+        <h3>Privacy First</h3>
+        <p>Nothing is stored on disk. Your invoices are processed in memory and discarded immediately.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">📊</div>
+        <h3>Export Anywhere</h3>
+        <p>Download results as CSV or Excel. Import directly into your accounting software or spreadsheets.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">📄</div>
+        <h3>Any PDF Invoice</h3>
+        <p>Works with invoices from any vendor. No templates needed. AI handles the variety.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">🌐</div>
+        <h3>Multi-Currency</h3>
+        <p>Auto-detects currency from the invoice — USD, EUR, GBP, and 50+ more.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">💻</div>
+        <h3>API Ready</h3>
+        <p>Developers can integrate via our REST API. Perfect for automating invoice processing workflows.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <h2>Simple Pricing</h2>
+    <div class="pricing-cards">
+      <div class="pricing-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-desc">Perfect for trying it out</div>
+        <ul>
+          <li>3 free extractions</li>
+          <li>CSV & Excel export</li>
+          <li>All field types supported</li>
+        </ul>
+        <button class="btn" onclick="document.getElementById('upload').scrollIntoView({behavior:'smooth'})">
+          Start Free
+        </button>
+      </div>
+      <div class="pricing-card pro">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$9<span>/month</span></div>
+        <div class="plan-desc">For professionals & teams</div>
+        <ul>
+          <li>Unlimited extractions</li>
+          <li>Priority processing</li>
+          <li>CSV & Excel export</li>
+          <li>API access</li>
+          <li>Email support</li>
+        </ul>
+        <button class="btn btn-primary" onclick="upgradeToPro()">
+          Upgrade to Pro
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>InvoiceSnap — Extract invoice data instantly. No storage. Privacy first.</p>
+    <p style="margin-top:8px">
+      <a href="mailto:hello@invoicesnap.app">hello@invoicesnap.app</a>
+      · Built with ❤️ for <a href="https://producthunt.com" target="_blank">Product Hunt</a>
+    </p>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// InvoiceSnap — Client Logic
+// =============================================
+
+const API = '/api';
+let sessionId = localStorage.getItem('invoicesnap_sid') || generateId();
+let currentFile = null;
+let extractedData = null;
+
+localStorage.setItem('invoicesnap_sid', sessionId);
+
+function generateId() {
+  return 'sess_' + Math.random().toString(36).substring(2, 15);
+}
+
+// DOM refs
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const extractBtn = document.getElementById('extractBtn');
+const freeCounter = document.getElementById('freeCounter');
+const resultsSection = document.getElementById('resultsSection');
+const errorSection = document.getElementById('errorSection');
+const upgradeBanner = document.getElementById('upgradeBanner');
+const toast = document.getElementById('toast');
+
+// Check usage on load
+fetchUsage();
+
+// ============ Drag & Drop ============
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.classList.add('drag-over');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+  uploadZone.classList.remove('drag-over');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+uploadZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+// Mouse glow tracking
+uploadZone.addEventListener('mousemove', (e) => {
+  const rect = uploadZone.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+  uploadZone.style.setProperty('--mouse-x', x + '%');
+  uploadZone.style.setProperty('--mouse-y', y + '%');
+});
+
+function handleFile(file) {
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
+    showToast('Please upload a PDF file.', 'error');
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('File too large. Max 10 MB.', 'error');
+    return;
+  }
+  currentFile = file;
+  fileName.textContent = file.name;
+  fileSize.textContent = formatBytes(file.size);
+  fileInfo.classList.add('visible');
+  extractBtn.classList.add('visible');
+  resultsSection.classList.remove('visible');
+  errorSection.classList.remove('visible');
+  upgradeBanner.classList.remove('visible');
+}
+
+function removeFile() {
+  currentFile = null;
+  fileInput.value = '';
+  fileInfo.classList.remove('visible');
+  extractBtn.classList.remove('visible');
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ============ Extract ============
+async function extractInvoice() {
+  if (!currentFile) return;
+
+  extractBtn.classList.add('loading');
+  extractBtn.disabled = true;
+  resultsSection.classList.remove('visible');
+  errorSection.classList.remove('visible');
+  upgradeBanner.classList.remove('visible');
+
+  const formData = new FormData();
+  formData.append('file', currentFile);
+
+  try {
+    const res = await fetch(API + '/extract', {
+      method: 'POST',
+      headers: { 'X-Session-Id': sessionId },
+      body: formData,
+    });
+
+    if (res.status === 402) {
+      // Free limit reached
+      const data = await res.json();
+      upgradeBanner.classList.add('visible');
+      extractBtn.classList.remove('visible');
+      extractBtn.classList.remove('loading');
+      extractBtn.disabled = false;
+      fetchUsage();
+      return;
+    }
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.detail || data.message || 'Extraction failed');
+    }
+
+    extractedData = await res.json();
+    renderResults(extractedData);
+    fetchUsage();
+    // Scroll to results
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+  } catch (err) {
+    showError('Extraction Failed', err.message);
+  } finally {
+    extractBtn.classList.remove('loading');
+    extractBtn.disabled = false;
+  }
+}
+
+// ============ Render Results ============
+function renderResults(data) {
+  // Summary grid
+  const grid = document.getElementById('summaryGrid');
+  const fields = [
+    { label: 'Vendor', value: data.vendor_name },
+    { label: 'Invoice #', value: data.invoice_number },
+    { label: 'Invoice Date', value: data.invoice_date },
+    { label: 'Due Date', value: data.due_date },
+    { label: 'Currency', value: data.currency },
+    { label: 'Tax', value: data.tax_amount != null ? formatCurrency(data.tax_amount, data.currency) : '—' },
+    { label: 'Total', value: data.total_amount != null ? formatCurrency(data.total_amount, data.currency) : '—', cls: 'amount' },
+  ];
+
+  grid.innerHTML = fields.map(f =>
+    `<div class="summary-item">
+      <div class="label">${f.label}</div>
+      <div class="value ${f.cls || ''}">${f.value || '—'}</div>
+    </div>`
+  ).join('');
+
+  // Line items table
+  const wrap = document.getElementById('lineItemsWrap');
+  const items = data.line_items || [];
+  if (items.length === 0) {
+    wrap.innerHTML = '<h3>Line Items</h3><div class="no-items">No line items detected in this invoice.</div>';
+  } else {
+    const rows = items.map((item, i) => `
+      <tr>
+        <td>${escapeHtml(item.description || '—')}</td>
+        <td class="number">${item.quantity != null ? item.quantity : '—'}</td>
+        <td class="number">${item.unit_price != null ? formatCurrency(item.unit_price, data.currency) : '—'}</td>
+        <td class="number">${item.amount != null ? formatCurrency(item.amount, data.currency) : '—'}</td>
+      </tr>
+    `).join('');
+
+    const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+    wrap.innerHTML = `
+      <h3>Line Items (${items.length})</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="number">Qty</th>
+              <th class="number">Unit Price</th>
+              <th class="number">Amount</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align:right">Subtotal</td>
+              <td class="number">${formatCurrency(subtotal, data.currency)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+  }
+
+  resultsSection.classList.add('visible');
+  errorSection.classList.remove('visible');
+}
+
+function formatCurrency(amount, currency) {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return (currency || '$') + ' ' + amount.toFixed(2);
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============ Export ============
+async function exportData(format) {
+  if (!extractedData) return;
+  try {
+    const res = await fetch(API + '/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: extractedData, format }),
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice_data.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Downloaded as ${format.toUpperCase()}.`);
+  } catch (err) {
+    showToast('Export failed: ' + err.message, 'error');
+  }
+}
+
+// ============ Stripe ============
+async function upgradeToPro() {
+  try {
+    const res = await fetch(API + '/create-checkout', { method: 'POST' });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      // Stripe not configured — show message
+      showToast('Stripe integration coming soon! Contact hello@invoicesnap.app', 'error');
+    }
+  } catch {
+    showToast('Stripe integration coming soon! Contact hello@invoicesnap.app', 'error');
+  }
+}
+
+// ============ Usage ============
+async function fetchUsage() {
+  try {
+    const res = await fetch(API + '/usage', {
+      headers: { 'X-Session-Id': sessionId },
+    });
+    const data = await res.json();
+    freeCounter.innerHTML = `<strong>${data.remaining}</strong> of ${data.limit} free extractions remaining`;
+    if (data.remaining === 0) {
+      upgradeBanner.classList.add('visible');
+      extractBtn.classList.remove('visible');
+    }
+  } catch {
+    freeCounter.textContent = '';
+  }
+}
+
+// ============ Error ============
+function showError(title, msg) {
+  document.getElementById('errorTitle').textContent = title;
+  document.getElementById('errorMsg').textContent = msg;
+  errorSection.classList.add('visible');
+  resultsSection.classList.remove('visible');
+  errorSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============ Reset ============
+function resetForm() {
+  removeFile();
+  resultsSection.classList.remove('visible');
+  errorSection.classList.remove('visible');
+  upgradeBanner.classList.remove('visible');
+  extractedData = null;
+  document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============ Toast ============
+let toastTimer;
+function showToast(msg, type) {
+  clearTimeout(toastTimer);
+  toast.textContent = msg;
+  toast.className = 'toast show ' + (type || '');
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Check for Stripe return
+if (window.location.search.includes('checkout=success')) {
+  showToast('Welcome to Pro! 🎉 Unlimited extractions unlocked.');
+  window.history.replaceState({}, '', '/');
+} else if (window.location.search.includes('checkout=cancelled')) {
+  showToast('Checkout cancelled. No worries!', 'error');
+  window.history.replaceState({}, '', '/');
+}
+</script>
+
+</body>
+</html>
